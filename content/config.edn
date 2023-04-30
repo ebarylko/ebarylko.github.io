@@ -1,7 +1,7 @@
 {:site-title                   "Eitan's Blog"
  :author                       "Eitan Barylko"
  :description                  "This blog is awesome"
- :site-url                     "http://blogawesome.com/"
+ :site-url                     "eitanbarylko.github.io"
  :post-root                    "posts"
  :page-root                    "pages"
  :post-root-uri                "posts-output"
