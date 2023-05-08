@@ -1,6 +1,6 @@
 {:site-title                   "Eitan's Blog"
  :author                       "Eitan Barylko"
- :description                  "This blog is awesome"
+ :description                  "Eitan's Blog"
  :site-url                     "eitanbarylko.github.io"
  :post-root                    "posts"
  :page-root                    "pages"
