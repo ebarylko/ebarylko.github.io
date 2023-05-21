@@ -32,3 +32,6 @@ Brief description of the post
 ```
 
 * Review and merge the pull request
+
+* Go to main branch and run `gh pr create --base live`
+* When approving merge, in the comments say that it closes #"whatever was the number of the issue you opened"
