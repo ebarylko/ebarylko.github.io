@@ -19,6 +19,7 @@ I went to the [firebase](https://firebase.google.com/?gad=1&gclid=CjwKCAjwjYKjBh
 ###  Setting up the core.cljs to initialize application
 I then went to the terminal and ran `npm install firebase`. After that, I added a directory fb in my src directory, and created a file called config.cljs. In this file I added the configuration settings for my application, which can be found in the lower portion of the project settings.
 
+
 ```clojure 
 (def firebase {
 :apiKey "Api key value"
@@ -84,6 +85,11 @@ With this in place, I was able to initialize the firebase instance by creating m
     (firebase-init!))
 ```
 
+
+With that done, I went into my core.cljs file located in src/haggadah, and made a few changes. First, I added the firebase/app library and my fb.config directory to my dependencies. With this in place, I was able to initialize the firebase instance by creating my `fb-init` and `firebase-init!` function. My fb-init function checks if there is an instance running, and if not, creates one with the specific configurations. My firebase-init! function does that as well, but is used with in the init function to set up the application.
+
+
+
 ### Setting up the firebase CLI
 The firebase CLI gives users a way of using firebase commands from the terminal. To use this, I first ran `curl -sL https://firebase.tools | bash`. After, I ran `firebase login` so that I would be verified and given permission to use the CLI. 
 
@@ -108,6 +114,7 @@ We first want to intall Karma, which will allow us to run integration tests. run
 * Add the customLaunchers key after client, adding the settings shown in the photo. 
 
 Your file should look like this.
+
 
 ``` clojure
 module.exports = function (config) {
@@ -135,8 +142,10 @@ module.exports = function (config) {
 ```
 
 
+
 ### Adding build scripts
 Head to the shadow-cljs.edn file and go to the builds in :builds. Add a new build called :ci, with the values shown in this photo.
+
 
 ``` clojure 
  :ci {:target :karma
@@ -152,6 +161,10 @@ Now head to the package.json file, and add a "test" key to scripts. It should ha
 ```
 
 
+
+Now head to the package.json file, and add a "test" key to scripts. It should have this appearance. 
+
+
 ### Editing the workflows
 The workflows are files that run a series of commands everytime a specific github command is detected. For example, a workflow could be configured to run the tests for your project everytime a pull request is detected. 
 
@@ -162,6 +175,7 @@ Head to the .github/workflows/firebase-hosting-merge.yml file. Under steps, wher
 Now go to the .github/workflows/firebase-hosting-pull-request.yml file. Under steps, where it says run, change the command associated with run to `npm install && npm run release`.
 
 Lastly, go to .github/workflows/test.yaml, and change it so it looks exactly like this. 
+
 
 ``` clojure 
 name: Run tests
@@ -184,6 +198,8 @@ jobs:
           npm install
           npm test
 ```
+=======
+
 ## End of part one
 
 This is the end of the first part of setting up the project. In the next post we'll finish setting everything up and then we can start adding features.
