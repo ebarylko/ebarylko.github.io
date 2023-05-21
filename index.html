@@ -65,7 +65,103 @@
 </div>
 <div>
     <ol class="toc"><li><a href="#setting-up-the-template">Setting up the template</a></li><li><a href="#setting-up-firebase">Setting up firebase</a></li><ol><li><a href="#creating-the-project-in-the-console">Creating the project in the console</a></li><li><a href="#setting-up-the-corecljs-to-initialize-application">Setting up the core.cljs to initialize application</a></li><li><a href="#setting-up-the-firebase-cli">Setting up the firebase CLI</a></li><li><a href="#setting-up-the-features-of-the-application">Setting up the features of the application</a></li><li><a href="#setting-up-the-firebase-emulators">Setting up the firebase emulators</a></li><li><a href="#other-small-details-to-fix">Other small details to fix</a></li></ol><li><a href="#setting-up-automated-testing">Setting up automated testing</a></li><ol><li><a href="#editing-the-karmaconfjs">Editing the karma.conf.js</a></li><li><a href="#adding-build-scripts">Adding build scripts</a></li><li><a href="#editing-the-workflows">Editing the workflows</a></li></ol><li><a href="#end-of-part-one">End of part one</a></li></ol>
-    <h2 id="setting-up-the-template">Setting up the template</h2><p>To set up the skeleton of the project I used the day8/re-frame-template library, and I ran the command <code>lein new re-frame haggadah +garden +kondo +github-actions +cider +10x +re-frisk +routes</code>. This generated a base for my application, including the libraries listed in the <code>+name</code> portion of the command. For more information on each of these libraries, click <a href="https://github.com/day8/re-frame-template">here</a>.</p><h2 id="setting-up-firebase">Setting up firebase</h2><h3 id="creating-the-project-in-the-console">Creating the project in the console</h3><p>I went to the <a href="https://firebase.google.com/?gad=1&amp;gclid=CjwKCAjwjYKjBhB5EiwAiFdSfs8e-1KZ06y9k_AJ2BfhLW42yqwPlUnheELNS498hf9ksVyTbV9pVxoCJmUQAvD_BwE&amp;gclsrc=aw.ds">firebase</a> website and clicked on create a new project. After naming the project and agreeing to the use of google analytics, I was at the home screen with the details of my project in front of me.</p><p><img src="/img/firebase_homescreen.png" alt="firebase homscreen" /></p><h3 id="setting-up-the-corecljs-to-initialize-application">Setting up the core.cljs to initialize application</h3><p>I then went to the terminal and ran <code>npm install firebase</code>. After that, I added a directory fb in my src directory, and created a file called config.cljs. In this file I added the configuration settings for my application, which can be found in the lower portion of the project settings.</p><p><img src="/img/firebase_configuration.png" alt="firebase config details" /></p><p>With that done, I went into my core.cljs file located in src/haggadah, and made a few changes. First, I added the firebase/app library and my fb.config directory to my dependencies. With this in place, I was able to initialize the firebase instance by creating my <code>fb-init</code> and <code>firebase-init!</code> function. My fb-init function checks if there is an instance running, and if not, creates one with the specific configurations. My firebase-init! function does that as well, but is used with in the init function to set up the application.</p><p><img src="/img/require_core.png" alt="haggadah.core require" /><img src="/img/fb_init.png" alt="initializing firebase" /></p><h3 id="setting-up-the-firebase-cli">Setting up the firebase CLI</h3><p>The firebase CLI gives users a way of using firebase commands from the terminal. To use this, I first ran <code>curl -sL https://firebase.tools | bash</code>. After, I ran <code>firebase login</code> so that I would be verified and given permission to use the CLI.</p><h3 id="setting-up-the-features-of-the-application">Setting up the features of the application</h3><p>Run <code>firebase init</code> within the app directory so that you can configure your application. Select all the features except Database. You'll then be asked to select a Firebase project to connect to your local project directory. Select existing project, and select the project with the name you assigned earlier when creating the project in the console. It'll then ask for the name of your public folder, just accept it as public. When asked if you want to setup automatic builds and deploys with github, select yes. Click yes on having your application be SPA (single page application).</p><h3 id="setting-up-the-firebase-emulators">Setting up the firebase emulators</h3><p>The emulators allow you to see how your project runs locally, allowing you to review and test your site before deploying it. Run <code>firebase init emulators</code>. Pick all emulators except Database, and accept default port locations.</p><h3 id="other-small-details-to-fix">Other small details to fix</h3><p>Head to the package.json file, and delete the "functions" key and its value. Furthermore, in the hosting key, change the value of the public key to "resources/public".</p><h2 id="setting-up-automated-testing">Setting up automated testing</h2><h3 id="editing-the-karmaconfjs">Editing the karma.conf.js</h3><p>We first want to intall Karma, which will allow us to run integration tests. run <code>npm install karma --save-dev</code>. Open your karma.conf.js, and make the follwing changes:</p><ul><li>Delete the junitOutputDir var</li><li>For the value of :browsers in config, change it to 'ChromeHeadlessNoSandbox'</li><li>Change the value of :files within config from 'karma-test.js' to 'ci.js'</li><li>Delete the junitReporter default configuration</li><li>Add the key value pair <code>singleRun: true</code>to client</li><li>Add the customLaunchers key after client, adding the settings shown in the photo.</li></ul><p>Your file should look like this.</p><p><img src="/img/karma_conf.png" alt="karma.config details" /></p><h3 id="adding-build-scripts">Adding build scripts</h3><p>Head to the shadow-cljs.edn file and go to the builds in :builds. Add a new build called :ci, with the values shown in this photo.</p><p><img src="/img/ci_build.png" alt="new build" /></p><p>Now head to the package.json file, and add a "test" key to scripts. It should have this appearance.</p><p><img src="/img/test_script.png" alt="test script" /></p><h3 id="editing-the-workflows">Editing the workflows</h3><p>The workflows are files that run a series of commands everytime a specific github command is detected. For example, a workflow could be configured to run the tests for your project everytime a pull request is detected.</p><p>There are three workflows we need to edit, one that deploys to firebase when merging a branch, one that runs the tests for the project when pull/push requests are detected, and one that deploys to firebase on pull requests.</p><p>Head to the .github/workflows/firebase-hosting-merge.yml file. Under steps, where it says run, change the command associated with run to <code>npm install &amp;&amp; npm run release</code>.</p><p>Now go to the .github/workflows/firebase-hosting-pull-request.yml file. Under steps, where it says run, change the command associated with run to <code>npm install &amp;&amp; npm run release</code>.</p><p>Lastly, go to .github/workflows/test.yaml, and change it so it looks exactly like this.</p><p><img src="/img/test_yaml.png" alt="yaml details" /></p><h2 id="end-of-part-one">End of part one</h2><p>This is the end of the first part of setting up the project. In the next post we'll finish setting everything up and then we can start adding features.</p>
+    <h2 id="setting-up-the-template">Setting up the template</h2><p>To set up the skeleton of the project I used the day8/re-frame-template library, and I ran the command <code>lein new re-frame haggadah +garden +kondo +github-actions +cider +10x +re-frisk +routes</code>. This generated a base for my application, including the libraries listed in the <code>+name</code> portion of the command. For more information on each of these libraries, click <a href="https://github.com/day8/re-frame-template">here</a>.</p><h2 id="setting-up-firebase">Setting up firebase</h2><h3 id="creating-the-project-in-the-console">Creating the project in the console</h3><p>I went to the <a href="https://firebase.google.com/?gad=1&amp;gclid=CjwKCAjwjYKjBhB5EiwAiFdSfs8e-1KZ06y9k_AJ2BfhLW42yqwPlUnheELNS498hf9ksVyTbV9pVxoCJmUQAvD_BwE&amp;gclsrc=aw.ds">firebase</a> website and clicked on create a new project. After naming the project and agreeing to the use of google analytics, I was at the home screen with the details of my project in front of me.</p><p><img src="/img/firebase_homescreen.png" alt="firebase homscreen" /></p><h3 id="setting-up-the-corecljs-to-initialize-application">Setting up the core.cljs to initialize application</h3><p>I then went to the terminal and ran <code>npm install firebase</code>. After that, I added a directory fb in my src directory, and created a file called config.cljs. In this file I added the configuration settings for my application, which can be found in the lower portion of the project settings.</p><pre><code class="clojure">(def firebase {
+:apiKey "Api key value"
+:authDomain "your domain"                                                                                        :databaseURL "your url"
+:projectId "name of project"
+:storageBucket "storageBucket details"
+:messagingSenderId "Id details"
+:appId "appId values",
+:measurementId "measurementId value"
+})
+</code></pre><p>With that done, I went into my core.cljs file located in src/haggadah, and made a few changes. First, I added the firebase/app library and my fb.config directory to my dependencies.</p><pre><code class="clojure">(ns haggadah.core
+    (:require
+     [reagent.dom :as rdom]
+     [re-frame.core :as re-frame]
+     [haggadah.events :as events]
+     [haggadah.routes :as routes]
+     [haggadah.views :as views]
+     [haggadah.config :as config]
+     ["firebase/app" :as fba]
+     [haggadah.fb.config :as cfg]
+     [haggadah.fb.auth :as fb-auth]
+     ))
+
+</code></pre><p>With this in place, I was able to initialize the firebase instance by creating my <code>fb-init</code> and <code>firebase-init!</code> function. My fb-init function checks if there is an instance running, and if not, creates one with the specific configurations. My firebase-init! function does that as well, but is used with in the init function to set up the application.</p><pre><code class="clojure">(defonce firebase-instance (atom nil))
+ 
+(defn dev-setup []
+  (when config/debug?
+    (println "dev mode")))
+
+(defn ^:dev/after-load mount-root []
+  (re-frame/clear-subscription-cache!)
+  (let [root-el (.getElementById js/document "app")]
+    (rdom/unmount-component-at-node root-el)
+    (rdom/render [views/main-panel] root-el)))
+
+(defn fb-init [config]
+  (when-not @firebase-instance
+    (let [cfg (clj-&gt;js config)]
+      (reset! firebase-instance (fba/initializeApp cfg))
+      (fb-auth/init @firebase-instance)
+      )))
+
+(defn firebase-init!
+  []
+  (fb-init cfg/firebase))
+
+(defn init []
+    (routes/start!)
+    (re-frame/dispatch-sync [::events/initialize-db])
+    (dev-setup)
+    (mount-root)
+    (firebase-init!))
+</code></pre><p>With that done, I went into my core.cljs file located in src/haggadah, and made a few changes. First, I added the firebase/app library and my fb.config directory to my dependencies. With this in place, I was able to initialize the firebase instance by creating my <code>fb-init</code> and <code>firebase-init!</code> function. My fb-init function checks if there is an instance running, and if not, creates one with the specific configurations. My firebase-init! function does that as well, but is used with in the init function to set up the application.</p><h3 id="setting-up-the-firebase-cli">Setting up the firebase CLI</h3><p>The firebase CLI gives users a way of using firebase commands from the terminal. To use this, I first ran <code>curl -sL https://firebase.tools | bash</code>. After, I ran <code>firebase login</code> so that I would be verified and given permission to use the CLI.</p><h3 id="setting-up-the-features-of-the-application">Setting up the features of the application</h3><p>Run <code>firebase init</code> within the app directory so that you can configure your application. Select all the features except Database. You'll then be asked to select a Firebase project to connect to your local project directory. Select existing project, and select the project with the name you assigned earlier when creating the project in the console. It'll then ask for the name of your public folder, just accept it as public. When asked if you want to setup automatic builds and deploys with github, select yes. Click yes on having your application be SPA (single page application).</p><h3 id="setting-up-the-firebase-emulators">Setting up the firebase emulators</h3><p>The emulators allow you to see how your project runs locally, allowing you to review and test your site before deploying it. Run <code>firebase init emulators</code>. Pick all emulators except Database, and accept default port locations.</p><h3 id="other-small-details-to-fix">Other small details to fix</h3><p>Head to the package.json file, and delete the "functions" key and its value. Furthermore, in the hosting key, change the value of the public key to "resources/public".</p><h2 id="setting-up-automated-testing">Setting up automated testing</h2><h3 id="editing-the-karmaconfjs">Editing the karma.conf.js</h3><p>We first want to intall Karma, which will allow us to run integration tests. run <code>npm install karma --save-dev</code>. Open your karma.conf.js, and make the follwing changes:</p><ul><li>Delete the junitOutputDir var</li><li>For the value of :browsers in config, change it to 'ChromeHeadlessNoSandbox'</li><li>Change the value of :files within config from 'karma-test.js' to 'ci.js'</li><li>Delete the junitReporter default configuration</li><li>Add the key value pair <code>singleRun: true</code>to client</li><li>Add the customLaunchers key after client, adding the settings shown in the photo.</li></ul><p>Your file should look like this.</p><pre><code class="clojure">module.exports = function (config) {
+ 
+    config.set({
+        browsers: ['ChromeHeadlessNoSandbox'],
+      basePath: 'target',
+      files: ['ci.js'],
+      frameworks: ['cljs-test'],
+      plugins: [
+          'karma-cljs-test',
+          'karma-chrome-launcher',
+      ],
+      colors: true,
+      logLevel: config.LOG_INFO,
+      client: {
+          args: ['shadow.test.karma.init'],
+          singleRun: true
+      },
+        customLaunchers: {ChromeHeadlessNoSandbox:  {'base': 'ChromeHeadless', 'flags': ['--no-sandbox']}},
+ 
+    })
+  }
+
+</code></pre><h3 id="adding-build-scripts">Adding build scripts</h3><p>Head to the shadow-cljs.edn file and go to the builds in :builds. Add a new build called :ci, with the values shown in this photo.</p><pre><code class="clojure"> :ci {:target :karma
+      :output-to "target/ci.js"}
+
+</code></pre><p>Now head to the package.json file, and add a "test" key to scripts. It should have this appearance.</p><pre><code class="clojure"> "test": "npx shadow-cljs compile ci &amp;&amp; npx karma start --single-run""
+</code></pre><p>Now head to the package.json file, and add a "test" key to scripts. It should have this appearance.</p><h3 id="editing-the-workflows">Editing the workflows</h3><p>The workflows are files that run a series of commands everytime a specific github command is detected. For example, a workflow could be configured to run the tests for your project everytime a pull request is detected.</p><p>There are three workflows we need to edit, one that deploys to firebase when merging a branch, one that runs the tests for the project when pull/push requests are detected, and one that deploys to firebase on pull requests.</p><p>Head to the .github/workflows/firebase-hosting-merge.yml file. Under steps, where it says run, change the command associated with run to <code>npm install &amp;&amp; npm run release</code>.</p><p>Now go to the .github/workflows/firebase-hosting-pull-request.yml file. Under steps, where it says run, change the command associated with run to <code>npm install &amp;&amp; npm run release</code>.</p><p>Lastly, go to .github/workflows/test.yaml, and change it so it looks exactly like this.</p><pre><code class="clojure">name: Run tests
+ 
+on: [push, pull_request]
+
+jobs:
+  test:
+    name: Tests
+    runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/day8/chrome-latest:5.0.0
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3 #Setup Node
+        with:
+          node-version: '18'
+      - name: run test
+        run: |
+          npm install
+          npm test
+</code></pre><p>=======</p><h2 id="end-of-part-one">End of part one</h2><p>This is the end of the first part of setting up the project. In the next post we'll finish setting everything up and then we can start adding features.</p>
 </div>
 
 <div id="post-tags">
