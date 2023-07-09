@@ -7,7 +7,7 @@
 
 ## Setting up the template
 
-To set up the skeleton of the project I used the day8/re-frame-template library, and I ran the command ` lein new re-frame haggadah +garden +kondo +github-actions +cider +10x +re-frisk +routes`. This generated a base for my application, including the libraries listed in the `+name` portion of the command. For more information on each of these libraries, click [here](https://github.com/day8/re-frame-template). 
+To set up the skeleton of the project I used the day8/re-frame-template library, and I ran the command ` lein new re-frame haggadah +garden +kondo +github-actions +cider +10x +re-frisk`. This generated a base for my application, including the libraries listed in the `+name` portion of the command. For more information on each of these libraries, click [here](https://github.com/day8/re-frame-template). 
 
 ## Setting up firebase
 

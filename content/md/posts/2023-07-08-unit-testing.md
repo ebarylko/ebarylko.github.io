@@ -12,6 +12,7 @@ This article covers what unit testing is, why it is useful, and an example of un
 
  Unit testing is about testing a function, using the inputs and verifying the outputs. Unlike acceptance testing which tests the result of a collection of functions interacting together, unit testing just grabs one function and sees whether it reacts correctly given certain inputs.
  
+
 ## Why is it useful?
  
 One possible situation in where you could have a unit test is if you are testing the registration feature for a website. What could be tested is that given the information for a user, registering a user with that information should result in a new user appearing in the database. That user's information should match the same information provided when registering earlier.
@@ -42,7 +43,7 @@ Here is the code for the test.
    (core/firebase-init!)
    (rf/dispatch-sync [::events/initialize-db])
    (rf/dispatch [::events/login])
-   (rf-test/wait-for [::events/fetch-haggadot] 
+   (rf-test/wait-for [::events/fetch-documents] 
     (let [user (rf/subscribe [::subs/user])
           name (rf/subscribe [::subs/name])]
       (t/are [x y] (= x y)
@@ -58,8 +59,6 @@ This test confirms that this aspect of the application works. With this I can al
 ## Conclusion
 
 Unit tests serve as a way of checking the inputs and outputs of functions, allowing for their correctness to be checked. Furthermore, they can also be used with acceptance tests to show that certain scenarios will not occur if those scenarios depend on the result of a specific function. 
-
-
 
 
 
