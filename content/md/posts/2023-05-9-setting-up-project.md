@@ -33,61 +33,140 @@ I then went to the terminal and ran `npm install firebase`. After that, I added 
 ``` 
 
 
-With that done, I went into my core.cljs file located in src/haggadah, and made a few changes. First, I added the firebase/app library and my fb.config directory to my dependencies.
+After that I created a file in src/haggadah called routes.cljs. I then added my dependencies so my name space declaration looked like this.
+```clojure
+(ns ^:dev/always haggadah.routes
+  (:require
+   [reitit.frontend.easy :as rfe]
+   [reitit.frontend.controllers :as rfc]
+   [reitit.coercion.spec :as rss]
+   [reitit.frontend :as rf]
+   [reagent.core :as r]
+   [re-frame.core :as re-frame]
+   [haggadah.views :as views]
+   [haggadah.events :as events]))
+```
+
+With that I defined the routes for the application.
+```clojure 
+(def routes
+  [
+   ["/" {:name      :home
+        :view      views/main-panel
+        :link-text "Home"}]])
+```
+Then, I added the code below which initializes the routing, manages the logic for navigating to new pages, and displays the view corresponding to the current route.
+
+```clojure
+(defn on-navigate [new-match]
+  (when new-match
+    :current-route
+    (re-frame/dispatch [:navigated new-match])))
+
+;; This event handler changes what the current route should do when the user enters it.
+(re-frame/reg-event-db
+ :navigated
+ (fn [db [_ new-match]]
+   (let [old-match   (:current-route db)
+         controllers (rfc/apply-controllers (:controllers old-match) new-match)]
+     (assoc db :current-route (assoc new-match :controllers controllers)))))
+
+
+;; this effect changes the current page to the one corresponding to [route]
+(re-frame/reg-fx
+ :push-state
+ (fn [route]
+   (apply rfe/push-state route)))
+
+;; This subscription grabs the current route from the database
+(re-frame/reg-sub
+ :current-route
+ (fn [db]
+   (:current-route db)))
+
+(def router
+  (rf/router
+   routes
+   {:data {:coercion rss/coercion}}))
+
+(defonce history (atom nil))
+
+(defn init-routes! []
+  (js/console.log "initializing routes")
+  (rfe/start!
+   router
+   on-navigate
+   {:use-fragment true}))
+
+;; this function grabs the view corresponding to the current route and renders it properly on the page
+(defn router-component [{:keys [router]}]
+  (let [current-route @(re-frame/subscribe [:current-route])
+        view (case (-> current-route :data :name)
+               :home  views/main-panel
+               views/main-panel)]
+    [:div.main-container.is-flex.is-flex-direction-column
+     [views/top-menu {:router router :current-route current-route}]
+     (when current-route
+       [:div.is-flex-grow-1.is-flex
+        [view]])]))
+```
+
+
+With that done, I went into my core.cljs file located in src/haggadah, and made a few changes. First, I added firebase/app , fb.config , reagent.core, fb.firestore, fb.functions, fb.auth, react-dom/client, and fb.routes to my dependencies. It should look like this.
 
 ``` clojure
 (ns haggadah.core
-    (:require
-     [reagent.dom :as rdom]
-     [re-frame.core :as re-frame]
-     [haggadah.events :as events]
-     [haggadah.routes :as routes]
-     [haggadah.views :as views]
-     [haggadah.config :as config]
-     ["firebase/app" :as fba]
-     [haggadah.fb.config :as cfg]
-     [haggadah.fb.auth :as fb-auth]
-     ))
-
+  (:require
+   ["firebase/app" :as fba]
+   ["react-dom/client" :refer [createRoot]]
+   [haggadah.config :as config]
+   [haggadah.events :as events]
+   [haggadah.fb.auth :as fb-auth]
+   [haggadah.fb.config :as cfg]
+   [haggadah.fb.firestore :as fb-fs]
+   [haggadah.fb.functions :as fb-fn]
+   [haggadah.routes :as routes]
+   [re-frame.core :as re-frame]
+   [reagent.core :as r]))
 ```
 
 With this in place, I was able to initialize the firebase instance by creating my `fb-init` and `firebase-init!` function. My fb-init function checks if there is an instance running, and if not, creates one with the specific configurations. My firebase-init! function does that as well, but is used with in the init function to set up the application.
 
 ``` clojure
 (defonce firebase-instance (atom nil))
- 
+
 (defn dev-setup []
   (when config/debug?
     (println "dev mode")))
 
+;; this function creates the container in which react components get rendered 
+(defonce root (createRoot (.getElementById js/document "app")))
+
 (defn ^:dev/after-load mount-root []
   (re-frame/clear-subscription-cache!)
-  (let [root-el (.getElementById js/document "app")]
-    (rdom/unmount-component-at-node root-el)
-    (rdom/render [views/main-panel] root-el)))
+  (.render root (r/as-element [routes/router-component {:router routes/router}])))
 
+
+;; this function initializes firebase and also connects the authentication, firestore, and functions emulators
 (defn fb-init [config]
   (when-not @firebase-instance
     (let [cfg (clj->js config)]
       (reset! firebase-instance (fba/initializeApp cfg))
-      (fb-auth/init @firebase-instance)
-      )))
+      (fb-auth/init @firebase-instance events/auth-user-success)
+      (fb-fs/init @firebase-instance)
+      (fb-fn/init @firebase-instance))))
 
 (defn firebase-init!
   []
   (fb-init cfg/firebase))
 
 (defn init []
-    (routes/start!)
-    (re-frame/dispatch-sync [::events/initialize-db])
-    (dev-setup)
-    (mount-root)
-    (firebase-init!))
+  (re-frame/dispatch-sync [::events/initialize-db])
+  (dev-setup)
+  (mount-root)
+  (firebase-init!)
+  (routes/init-routes!))
 ```
-
-
-With that done, I went into my core.cljs file located in src/haggadah, and made a few changes. First, I added the firebase/app library and my fb.config directory to my dependencies. With this in place, I was able to initialize the firebase instance by creating my `fb-init` and `firebase-init!` function. My fb-init function checks if there is an instance running, and if not, creates one with the specific configurations. My firebase-init! function does that as well, but is used with in the init function to set up the application.
-
 
 
 ### Setting up the firebase CLI
@@ -159,7 +238,6 @@ Now head to the package.json file, and add a "test" key to scripts. It should ha
 ``` clojure
  "test": "npx shadow-cljs compile ci && npx karma start --single-run""
 ```
-
 
 
 Now head to the package.json file, and add a "test" key to scripts. It should have this appearance. 
